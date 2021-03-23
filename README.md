@@ -11,9 +11,10 @@
 这里介绍VAE和GAN两种深度学习中的生成式模型。
 
 ## 二、GAN
+## 2.1 介绍
 生成对抗网络(generative adversarial network, GAN)的模型结构如下图所示：
 
-![GAN-structure](resources/GAN_structure.jfif)
+![GAN-structure](resources/GAN/GAN_structure.jfif)
 
 GAN由生成器(generator)和判别器(discriminator)组成，其中生成器是一个带参数映射G：Z-->X'，把隐变量Z映射到X'。隐变量Z采样自一个已知分布，比如高斯分布。生成器可以隐式地求
 P(X') = P(G(Z))=ΣP(Z)P(X'|Z)。而真实数据变量为X，来自分布P(X)，GAN就是让P(X')和P(X)尽可能地接近。两个分布的“距离”可以用交叉熵、KL散度，但在GAN中并没有关于分布的解析形式，
@@ -21,11 +22,16 @@ P(X') = P(G(Z))=ΣP(Z)P(X'|Z)。而真实数据变量为X，来自分布P(X)，G
 
 具体来说，GAN通过一个判别器D(二分类器)，D的任务是把真实数据x分类为1(正例)，把生成的伪数据x‘分类为0(负例)。GAN的期望损失函数为：
 
-![GAN-loss-function](resources/GAN_loss.png)
+![GAN-loss-function](resources/GAN/GAN_loss.png)
 
 该损失函数解释为：对D来说，x的标签是1，log(D(X))即为负的交叉熵，对D来说应该最大化。而G(z)对D来说标签为0，则log(1-D(G(z)))即为负的交叉熵，关于D要最大化；
 而对G而言需要**尽量骗过D**，因此它要最小化该项。在训练过程中，D和G在一次迭代(iteration)中分别进行参数更新。优化的结果是判别器D无法判别数据来自X还是G(Z)，
 也就是分布P(X') = P(G(Z))与分布P(X)近似相等。
+
+## 2.2 训练GAN的建议
+GAN在训练的过程中容易出现模式塌陷(Mode Collapse)和不收敛的结果，所谓模式塌陷(Mode Collapse)即对不同取值的隐变量，生成的图像相似，下面给出一些训练建议：
+1. 对图像进行归一化处理，输出到[-1, 1]之间，生成器最后一层使用Tanh函数作为激活函数的输出，保证输出的图像在[-1, 1]之间。
+2. 使用mini-batch 
 
 ## 三、VAE
 变分自编码器(Variational Autoencoder, VAE)模型源于自编码器(Autoencoder, AE)，自编码器由编码器(encoder)和解码器(decoder)组成，编码器将输入X映射到隐变量Z，解码器将隐变量Z映射到X'。损失函数一般为MSE，让输入X与解码X'尽量相等。
@@ -34,11 +40,11 @@ P(X') = P(G(Z))=ΣP(Z)P(X'|Z)。而真实数据变量为X，来自分布P(X)，G
 原因在于如果抛离编码器，隐变量Z的分布P(Z)=ΣP(X)P(Z|X)我们是一无所知的，无法从中采样作为解码器的输入。而VAE的想法是在AE的基础上，对隐变量Z的分布进行一定的约束(正则化)。比如约束P(Z|X)=N(Z|0, I)，则P(Z) = ΣP(X)P(Z|X) = N(Z|0, I)，
 这样即便抛离编码器，也可以从N(0, I)中采样作为解码器(生成模型)的输入。
 
-![VAE-structure](resources/VAE_structure.jpg)
+![VAE-structure](resources/VAE/VAE_structure.jpg)
 
 VAE使用了重参数化技巧(Reparameterization)，即编码器不输出隐变量Z，而输出Z服从的分布的参数。比如编码器输出高斯分布参数μ、Σ，接着可以用它和标准正态分布的KL散度作为损失函数对Z的分布进行约束，这里给出一元高斯分布的示例，多元高斯分布有相同形式：
 
-![VAE-KL-loss](resources/VAE_kl_loss.png)
+![VAE-KL-loss](resources/VAE/VAE_kl_loss.png)
 
 解码器的输入来自N(Z|μ、Σ)采样，具体做法是先生成一个服从标准正态分布的张量*η*，令Σ*η*+μ作为解码器的输入，这样能对**参数μ、Σ进行梯度反向传播计算**。
 最终损失函数的形式为： 
